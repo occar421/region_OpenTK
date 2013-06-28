@@ -1,5 +1,5 @@
 ﻿/**
- * 参照設定 : OpenTK OpenTK.GLControl System System.Data System.Drawing System.Windows.Forms System.Xml
+ * 参照設定 : OpenTK OpenTK.GLControl System System.Drawing System.Windows.Forms
  */
 
 using System;
@@ -14,15 +14,18 @@ namespace OpenTK_Sample
 	{
 		public WinForm()
 		{
+			//(デザイナで指定)800x600のウィンドウを作る。タイトルは「0-4:WindowsForm」
 			InitializeComponent();
 		}
 
+		//glControlの起動時に実行される。
 		private void glControl_Load(object sender, EventArgs e)
 		{
 			GL.ClearColor(Color4.Black);
 			GL.Enable(EnableCap.DepthTest);
 		}
 
+		//glControlのサイズ変更時に実行される。
 		private void glControl_Resize(object sender, EventArgs e)
 		{
 			GL.Viewport(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height);
@@ -31,6 +34,7 @@ namespace OpenTK_Sample
 			GL.LoadMatrix(ref projection);
 		}
 
+		//glControlの描画時に実行される。
 		private void glControl_Paint(object sender, PaintEventArgs e)
 		{
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);

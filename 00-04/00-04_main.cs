@@ -28,9 +28,9 @@ namespace OpenTK_Sample
 		//glControlのサイズ変更時に実行される。
 		private void glControl_Resize(object sender, EventArgs e)
 		{
-			GL.Viewport(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height);
+			GL.Viewport(0, 0, glControl.Size.Width, glControl.Size.Height);
 			GL.MatrixMode(MatrixMode.Projection);
-			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, (float)Width / (float)Height, 1.0f, 64.0f);
+			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, (float)glControl.Size.Width / (float)glControl.Size.Height, 1.0f, 64.0f);
 			GL.LoadMatrix(ref projection);
 		}
 

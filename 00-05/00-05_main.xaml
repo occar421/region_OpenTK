@@ -1,0 +1,9 @@
+﻿<Window x:Class="OpenTK_Sample.WPF"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:OpenTK="clr-namespace:OpenTK;assembly=OpenTK.GLControl"
+        Title="0-5:WindowsPresentationFoundation" Height="600" Width="800">
+	<WindowsFormsHost>
+		<OpenTK:GLControl x:Name="glControl" Load="glControl_Load" Resize="glControl_Resize" Paint="glControl_Paint" />
+	</WindowsFormsHost>
+</Window>

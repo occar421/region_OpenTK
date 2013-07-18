@@ -25,38 +25,40 @@ namespace OpenTK_Samples
 
 	class Game : GameWindow
 	{
-		#region MouseTracking_Field
-		bool isTracking;			//トラッキング中かどうか
+		#region Camera__Field
+
+		bool isCameraRotating;		//カメラが回転状態かどうか
 		Vector2 current, previous;	//現在の点、前の点
 		Matrix4 rotate;				//回転行列
 		float zoom;					//拡大度
 		float wheelPrevious;		//マウスホイールの前の状態
+
 		#endregion
 
-		Vector3[] Position;	//頂点の位置
+		Vector3[] position;	//頂点の位置
 		const int N = 200;	//頂点の数
 
-		uint VBO;			//VBOのバッファの識別番号を保持
+		uint vbo;			//VBOのバッファの識別番号を保持
 
 		//800x600のウィンドウを作る。タイトルは「1-3:VertexBufferObject(1)」
 		public Game()
 			: base(800, 600, GraphicsMode.Default, "1-3:VertexBufferObject(1)")
 		{
-			Position = new Vector3[N];
-			VBO = 0;
+			position = new Vector3[N];
+			vbo = 0;
 
-			VSync = VSyncMode.On;
+			#region Camera__Initialize
 
-			#region MouseTracking_FieldInitialize
-			isTracking = false;
+			isCameraRotating = false;
 			current = Vector2.Zero;
 			previous = Vector2.Zero;
 			rotate = Matrix4.Identity;
 			zoom = 1.0f;
 			wheelPrevious = 0.0f;
+
 			#endregion
 
-			#region MouseTracking_Event
+			#region Camera__Event
 
 			//マウスボタンが押されると発生するイベント
 			this.Mouse.ButtonDown += (sender, e) =>
@@ -64,7 +66,7 @@ namespace OpenTK_Samples
 				//右ボタンが押された場合
 				if (e.Button == MouseButton.Right)
 				{
-					isTracking = true;
+					isCameraRotating = true;
 					current = new Vector2(this.Mouse.X, this.Mouse.Y);
 				}
 			};
@@ -75,7 +77,7 @@ namespace OpenTK_Samples
 				//右ボタンが押された場合
 				if (e.Button == MouseButton.Right)
 				{
-					isTracking = false;
+					isCameraRotating = false;
 					previous = Vector2.Zero;
 				}
 			};
@@ -83,8 +85,8 @@ namespace OpenTK_Samples
 			//マウスが動くと発生するイベント
 			this.Mouse.Move += (sender, e) =>
 			{
-				//トラッキング中の場合
-				if (isTracking)
+				////カメラが回転状態の場合
+				if (isCameraRotating)
 				{
 					previous = current;
 					current = new Vector2(this.Mouse.X, this.Mouse.Y);
@@ -93,7 +95,7 @@ namespace OpenTK_Samples
 					float length = delta.Length;
 					if (length > 0.0)
 					{
-						float rad = length * (float)Math.PI;
+						float rad = length * MathHelper.Pi;
 						float theta = (float)Math.Sin(rad) / length;
 						Quaternion after = new Quaternion(delta.Y * theta, delta.X * theta, 0.0f, (float)Math.Cos(rad));
 						rotate = rotate * Matrix4.Rotate(after);
@@ -104,19 +106,21 @@ namespace OpenTK_Samples
 			//マウスホイールが回転すると発生するイベント
 			this.Mouse.WheelChanged += (sender, e) =>
 			{
-				float delta = (float)this.Mouse.Wheel - wheelPrevious;
+				float delta = (float)this.Mouse.Wheel - (float)wheelPrevious;
 
 				zoom *= (float)Math.Pow(1.2, delta);
 
 				//拡大、縮小の制限
-				if (zoom > 2.5f)
-					zoom = 2.5f;
-				if (zoom < 0.4f)
-					zoom = 0.4f;
+				if (zoom > 2.0f)
+					zoom = 2.0f;
+				if (zoom < 0.5f)
+					zoom = 0.5f;
 				wheelPrevious = this.Mouse.Wheel;
 			};
 
 			#endregion
+
+			VSync = VSyncMode.On;
 		}
 
 		//ウィンドウの起動時に実行される。
@@ -127,21 +131,19 @@ namespace OpenTK_Samples
 			GL.ClearColor(Color4.Black);
 			GL.Enable(EnableCap.DepthTest);
 
-			GL.LineWidth(1.0f);	//線の太さを設定
-
 			Random();
 
 			GL.EnableClientState(ArrayCap.VertexArray);	//VertexArrayを有効化
 
 			//バッファを1コ作成
-			GL.GenBuffers(1, out VBO);
+			GL.GenBuffers(1, out vbo);
 
 			//ArrayBufferとして"VBO"を指定(バインド)
-			GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
 
-			int size = Position.Length * System.Runtime.InteropServices.Marshal.SizeOf(default(Vector3));
+			int size = position.Length * System.Runtime.InteropServices.Marshal.SizeOf(default(Vector3));
 			//ArrayBufferにデータをセット
-			GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(size), Position, BufferUsageHint.StaticDraw);
+			GL.BufferData(BufferTarget.ArrayBuffer, new IntPtr(size), position, BufferUsageHint.StaticDraw);
 
 			//バッファの指定(バインド)を解除
 			GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -152,7 +154,7 @@ namespace OpenTK_Samples
 		{
 			base.OnUnload(e);
 
-			GL.DeleteBuffers(1, ref VBO);				//バッファを1コ削除
+			GL.DeleteBuffers(1, ref vbo);				//バッファを1コ削除
 
 			GL.DisableClientState(ArrayCap.VertexArray);//VertexArrayを無効化
 		}
@@ -163,10 +165,6 @@ namespace OpenTK_Samples
 			base.OnResize(e);
 
 			GL.Viewport(ClientRectangle);
-
-			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, Width / (float)Height, 1.0f, 64.0f);
-			GL.MatrixMode(MatrixMode.Projection);
-			GL.LoadMatrix(ref projection);
 		}
 
 		//画面更新で実行される。
@@ -180,6 +178,14 @@ namespace OpenTK_Samples
 				this.Exit();
 			}
 
+			//Enterキーで点をランダムにする(StaticDrawなので反映はされない)
+			if (Keyboard[Key.Enter])
+			{
+				Random();
+			}
+
+			#region Camera__Keyboard
+
 			//F1キーで回転をリセット
 			if (Keyboard[Key.F1])
 			{
@@ -189,19 +195,19 @@ namespace OpenTK_Samples
 			//F2キーでY軸90度回転
 			if (Keyboard[Key.F2])
 			{
-				rotate = Matrix4.CreateRotationY((float)Math.PI / 2.0f);
+				rotate = Matrix4.CreateRotationY(MathHelper.PiOver2);
 			}
 
 			//F3キーでY軸180度回転
 			if (Keyboard[Key.F3])
 			{
-				rotate = Matrix4.CreateRotationY((float)Math.PI);
+				rotate = Matrix4.CreateRotationY(MathHelper.Pi);
 			}
 
 			//F4キーでY軸270度回転
 			if (Keyboard[Key.F4])
 			{
-				rotate = Matrix4.CreateRotationY(3.0f * (float)Math.PI / 2.0f);
+				rotate = Matrix4.CreateRotationY(MathHelper.ThreePiOver2);
 			}
 
 			//F5キーで拡大をリセット
@@ -210,11 +216,7 @@ namespace OpenTK_Samples
 				zoom = 1.0f;
 			}
 
-			//Enterキーで点をランダムにする(StaticDrawなので反映はされない)
-			if (Keyboard[Key.Enter])
-			{
-				Random();
-			}
+			#endregion
 		}
 
 		//画面描画で実行される。
@@ -224,23 +226,29 @@ namespace OpenTK_Samples
 
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-			Matrix4 modelview = Matrix4.LookAt(Vector3.UnitZ * 10, Vector3.Zero, Vector3.UnitY);
+			#region TransFormationMatrix
+
+			Matrix4 modelView = Matrix4.LookAt(Vector3.UnitZ * 10 / zoom, Vector3.Zero, Vector3.UnitY);
 			GL.MatrixMode(MatrixMode.Modelview);
-			GL.LoadMatrix(ref modelview);
+			GL.LoadMatrix(ref modelView);
 			GL.MultMatrix(ref rotate);
-			Matrix4 scale = Matrix4.Scale(zoom);
-			GL.MultMatrix(ref scale);
+
+			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4 / zoom, (float)this.Width / (float)this.Height, 1.0f, 64.0f);
+			GL.MatrixMode(MatrixMode.Projection);
+			GL.LoadMatrix(ref projection);
+
+			#endregion
 
 			GL.Color4(Color4.Red);
 
 			//ArrayBufferとして"VBO"を指定(バインド)
-			GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
+			GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
 
 			//頂点のバッファ領域を指定
 			GL.VertexPointer(3, VertexPointerType.Float, 0, 0);
 
 			//バッファの内容を直線で描画
-			GL.DrawArrays(BeginMode.Lines, 0, Position.Length);
+			GL.DrawArrays(BeginMode.Lines, 0, position.Length);
 
 			//バッファの指定(バインド)を解除
 			GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
@@ -254,9 +262,9 @@ namespace OpenTK_Samples
 			Random r = new Random();
 			for (int i = 0; i < N; i++)
 			{
-				Position[i].X = (float)r.NextDouble() * 10.0f - 5.0f;
-				Position[i].Y = (float)r.NextDouble() * 10.0f - 5.0f;
-				Position[i].Z = (float)r.NextDouble() * 10.0f - 5.0f;
+				position[i].X = (float)r.NextDouble() * 10.0f - 5.0f;
+				position[i].Y = (float)r.NextDouble() * 10.0f - 5.0f;
+				position[i].Z = (float)r.NextDouble() * 10.0f - 5.0f;
 			}
 		}
 	}

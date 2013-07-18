@@ -25,17 +25,18 @@ namespace OpenTK_Sample
 
 	class Game : GameWindow
 	{
-		Vector2[] Position;		//点の位置
-		Color4[] Color;			//点の色
-		const int N = 130;		//点の数
+		Vector2[] position;		//点の位置
+		Color4[] color;			//点の色
+		const int N = 100;		//点の数
 
 		//800x600のウィンドウを作る。タイトルは「1-1:Points and Lines」
 		public Game()
 			: base(800, 600, GraphicsMode.Default, "1-1:Points and Lines")
 		{
+			position = new Vector2[N];
+			color = new Color4[N];
+
 			VSync = VSyncMode.On;
-			Position = new Vector2[N];
-			Color = new Color4[N];
 		}
 
 		//ウィンドウの起動時に実行される。
@@ -90,8 +91,8 @@ namespace OpenTK_Sample
 			GL.Begin(BeginMode.Points);
 			for (int i = 0; i < N; i++)
 			{
-				GL.Color4(Color[i]);
-				GL.Vertex2(Position[i]);
+				GL.Color4(color[i]);
+				GL.Vertex2(position[i]);
 			}
 			GL.End();
 
@@ -99,8 +100,8 @@ namespace OpenTK_Sample
 			GL.Begin(BeginMode.Lines);
 			for (int i = 0; i < N; i++)
 			{
-				GL.Color4(Color[i]);
-				GL.Vertex2(Position[i]);
+				GL.Color4(color[i]);
+				GL.Vertex2(position[i]);
 			}
 			GL.End();
 
@@ -113,11 +114,11 @@ namespace OpenTK_Sample
 			Random r = new Random();
 			for (int i = 0; i < N; i++)
 			{
-				Position[i].X = (float)r.NextDouble() * 2.0f - 1.0f;
-				Position[i].Y = (float)r.NextDouble() * 2.0f - 1.0f;
-				Color[i].R = (float)r.NextDouble();
-				Color[i].G = (float)r.NextDouble();
-				Color[i].B = (float)r.NextDouble();
+				position[i].X = (float)r.NextDouble() * 2.0f - 1.0f;
+				position[i].Y = (float)r.NextDouble() * 2.0f - 1.0f;
+				color[i].R = (float)r.NextDouble();
+				color[i].G = (float)r.NextDouble();
+				color[i].B = (float)r.NextDouble();
 			}
 		}
 	}

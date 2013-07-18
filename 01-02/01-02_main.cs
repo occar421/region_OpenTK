@@ -25,26 +25,32 @@ namespace OpenTK_Samples
 
 	class Game : GameWindow
 	{
-		bool isTracking;			//トラッキング中かどうか
+		#region Camera__Field
+
+		bool isCameraRotating;		//カメラが回転状態かどうか
 		Vector2 current, previous;	//現在の点、前の点
 		Matrix4 rotate;				//回転行列
 		float zoom;					//拡大度
 		float wheelPrevious;		//マウスホイールの前の状態
 
-		//800x600のウィンドウを作る。タイトルは「1-2:Mouse Tracking View」
-		public Game()
-			: base(800, 600, GraphicsMode.Default, "1-2:Mouse Tracking View")
-		{
-			VSync = VSyncMode.On;
+		#endregion
 
-			isTracking = false;
+		//800x600のウィンドウを作る。タイトルは「1-2:Camera」
+		public Game()
+			: base(800, 600, GraphicsMode.Default, "1-2:Camera")
+		{
+			#region Camera__Initialize
+
+			isCameraRotating = false;
 			current = Vector2.Zero;
 			previous = Vector2.Zero;
 			rotate = Matrix4.Identity;
 			zoom = 1.0f;
 			wheelPrevious = 0.0f;
 
-			#region MouseTracking
+			#endregion
+
+			#region Camera__Event
 
 			//マウスボタンが押されると発生するイベント
 			this.Mouse.ButtonDown += (sender, e) =>
@@ -52,7 +58,7 @@ namespace OpenTK_Samples
 				//右ボタンが押された場合
 				if (e.Button == MouseButton.Right)
 				{
-					isTracking = true;
+					isCameraRotating = true;
 					current = new Vector2(this.Mouse.X, this.Mouse.Y);
 				}
 			};
@@ -63,7 +69,7 @@ namespace OpenTK_Samples
 				//右ボタンが押された場合
 				if (e.Button == MouseButton.Right)
 				{
-					isTracking = false;
+					isCameraRotating = false;
 					previous = Vector2.Zero;
 				}
 			};
@@ -71,8 +77,8 @@ namespace OpenTK_Samples
 			//マウスが動くと発生するイベント
 			this.Mouse.Move += (sender, e) =>
 			{
-				//トラッキング中の場合
-				if (isTracking)
+				////カメラが回転状態の場合
+				if (isCameraRotating)
 				{
 					previous = current;
 					current = new Vector2(this.Mouse.X, this.Mouse.Y);
@@ -81,7 +87,7 @@ namespace OpenTK_Samples
 					float length = delta.Length;
 					if (length > 0.0)
 					{
-						float rad = length * (float)Math.PI;
+						float rad = length * MathHelper.Pi;
 						float theta = (float)Math.Sin(rad) / length;
 						Quaternion after = new Quaternion(delta.Y * theta, delta.X * theta, 0.0f, (float)Math.Cos(rad));
 						rotate = rotate * Matrix4.Rotate(after);
@@ -92,19 +98,21 @@ namespace OpenTK_Samples
 			//マウスホイールが回転すると発生するイベント
 			this.Mouse.WheelChanged += (sender, e) =>
 			{
-				float delta = (float)this.Mouse.Wheel - wheelPrevious;
+				float delta = (float)this.Mouse.Wheel - (float)wheelPrevious;
 
 				zoom *= (float)Math.Pow(1.2, delta);
 
 				//拡大、縮小の制限
-				if (zoom > 2.5f)
-					zoom = 2.5f;
-				if (zoom < 0.4f)
-					zoom = 0.4f;
+				if (zoom > 2.0f)
+					zoom = 2.0f;
+				if (zoom < 0.5f)
+					zoom = 0.5f;
 				wheelPrevious = this.Mouse.Wheel;
 			};
 			
 			#endregion
+
+			VSync = VSyncMode.On;
 		}
 
 		//ウィンドウの起動時に実行される。
@@ -122,10 +130,6 @@ namespace OpenTK_Samples
 			base.OnResize(e);
 
 			GL.Viewport(ClientRectangle);
-
-			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI / 4, Width / (float)Height, 1.0f, 64.0f);
-			GL.MatrixMode(MatrixMode.Projection);
-			GL.LoadMatrix(ref projection);
 		}
 
 		//画面更新で実行される。
@@ -139,6 +143,8 @@ namespace OpenTK_Samples
 				this.Exit();
 			}
 
+			#region Camera__Keyboard
+
 			//F1キーで回転をリセット
 			if (Keyboard[Key.F1])
 			{
@@ -148,19 +154,19 @@ namespace OpenTK_Samples
 			//F2キーでY軸90度回転
 			if (Keyboard[Key.F2])
 			{
-				rotate = Matrix4.CreateRotationY((float)Math.PI / 2.0f);
+				rotate = Matrix4.CreateRotationY(MathHelper.PiOver2);
 			}
 
 			//F3キーでY軸180度回転
 			if (Keyboard[Key.F3])
 			{
-				rotate = Matrix4.CreateRotationY((float)Math.PI);
+				rotate = Matrix4.CreateRotationY(MathHelper.Pi);
 			}
 
 			//F4キーでY軸270度回転
 			if (Keyboard[Key.F4])
 			{
-				rotate = Matrix4.CreateRotationY(3.0f * (float)Math.PI / 2.0f);
+				rotate = Matrix4.CreateRotationY(MathHelper.ThreePiOver2);
 			}
 
 			//F5キーで拡大をリセット
@@ -168,6 +174,8 @@ namespace OpenTK_Samples
 			{
 				zoom=1.0f;
 			}
+
+			#endregion
 		}
 
 		//画面描画で実行される。
@@ -177,20 +185,26 @@ namespace OpenTK_Samples
 
 			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-			Matrix4 modelview = Matrix4.LookAt(Vector3.UnitZ * 10, Vector3.Zero, Vector3.UnitY);
-			GL.MatrixMode(MatrixMode.Modelview);
-			GL.LoadMatrix(ref modelview);
-			GL.MultMatrix(ref rotate);
-			Matrix4 scale = Matrix4.Scale(zoom);
-			GL.MultMatrix(ref scale);
+			#region TransFormationMatrix
 
-			drawPyramid();
+			Matrix4 modelView = Matrix4.LookAt(Vector3.UnitZ * 10 / zoom, Vector3.Zero, Vector3.UnitY);
+			GL.MatrixMode(MatrixMode.Modelview);
+			GL.LoadMatrix(ref modelView);
+			GL.MultMatrix(ref rotate);
+
+			Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4 / zoom, (float)this.Width / (float)this.Height, 1.0f, 64.0f);
+			GL.MatrixMode(MatrixMode.Projection);
+			GL.LoadMatrix(ref projection);
+
+			#endregion
+
+			DrawPyramid();
 
 			SwapBuffers();
 		}
 
 		//正四角錐を描画する。
-		private void drawPyramid()
+		private void DrawPyramid()
 		{
 			GL.Begin(BeginMode.Triangles);
 
@@ -198,18 +212,22 @@ namespace OpenTK_Samples
 			GL.Vertex3(1.0f, 1.0f, -1.0f);
 			GL.Vertex3(1.0f, -1.0f, -1.0f);
 			GL.Vertex3(0.0f, 0.0f, 1.0f);
+
 			GL.Color4(Color4.Navy);
 			GL.Vertex3(1.0f, -1.0f, -1.0f);
 			GL.Vertex3(-1.0f, -1.0f, -1.0f);
 			GL.Vertex3(0.0f, 0.0f, 1.0f);
+
 			GL.Color4(Color4.Green);
 			GL.Vertex3(-1.0f, -1.0f, -1.0f);
 			GL.Vertex3(-1.0f, 1.0f, -1.0f);
 			GL.Vertex3(0.0f, 0.0f, 1.0f);
+
 			GL.Color4(Color4.LightSkyBlue);
 			GL.Vertex3(-1.0f, 1.0f, -1.0f);
 			GL.Vertex3(1.0f, 1.0f, -1.0f);
 			GL.Vertex3(0.0f, 0.0f, 1.0f);
+
 			GL.Color4(Color4.LightYellow);
 			GL.Vertex3(1.0f, 1.0f, -1.0f);
 			GL.Vertex3(1.0f, -1.0f, -1.0f);

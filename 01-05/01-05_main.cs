@@ -207,19 +207,6 @@ namespace OpenTK_Samples
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
 		}
 
-		//ウィンドウの終了時に実行される。
-		protected override void OnUnload(EventArgs e)
-		{
-			base.OnUnload(e);
-
-			GL.DeleteBuffers(3, vbo);			//バッファを3コ削除
-			GL.DeleteBuffers(1, ref ibo);		//バッファを1コ削除
-
-			GL.DisableClientState(ArrayCap.VertexArray);	//VertexArrayを無効化
-			GL.DisableClientState(ArrayCap.NormalArray);	//NormalArrayを無効化
-			GL.DisableClientState(ArrayCap.ColorArray);		//ColorArrayを無効化
-		}
-
 		//ウィンドウのサイズが変更された場合に実行される。
 		protected override void OnResize(EventArgs e)
 		{

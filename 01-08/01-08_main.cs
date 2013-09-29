@@ -8,8 +8,6 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 
-using System.Runtime.InteropServices;
-
 namespace OpenTK_Samples
 {
 	class OpenTK_Sample

@@ -39,9 +39,6 @@ namespace OpenTK_Samples
 
 		int texture;
 
-		const int textureWidth = 480;
-		const int textureHeight = 480;
-
 		//800x600のウィンドウを作る。タイトルは「2-10:Texture Matrix Transform」
 		public Game()
 			: base(800, 600, GraphicsMode.Default, "2-10:Texture Matrix Transform")
@@ -150,8 +147,8 @@ namespace OpenTK_Samples
 			//データ読み込み
 			BitmapData data = file.LockBits(new Rectangle(0, 0, file.Width, file.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-			//初期テクスチャを設定
-			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, textureWidth, textureHeight, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+			//テクスチャ用バッファに色情報を流し込む
+			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
 		}
 
 		//ウィンドウの終了時に実行される。
